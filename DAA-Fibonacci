@@ -1,0 +1,130 @@
+# Fibonacci Series using Recursive and Non-Recursive Methods
+
+# Non-Recursive (Iterative) Function
+def fibonacci_non_recursive(n):
+    a, b = 0, 1
+
+    for i in range(n):
+        print(a, end=" ")
+        a, b = b, a + b
+
+
+# Recursive Function
+def fibonacci_recursive(n):
+    if n <= 1:
+        return n
+    else:
+        return fibonacci_recursive(n - 1) + fibonacci_recursive(n - 2)
+
+
+# Main Program
+n = int(input("Enter the number of terms: "))
+
+if n <= 0:
+    print("Please enter a positive number.")
+else:
+    print("\nFibonacci Series using Non-Recursive Method:")
+    fibonacci_non_recursive(n)
+
+    print("\n\nFibonacci Series using Recursive Method:")
+    for i in range(n):
+        print(fibonacci_recursive(i), end=" ")
+
+    print()
+
+Part A: Viva Questions with Answers
+1. What is the Fibonacci sequence of numbers?
+The Fibonacci sequence is a series of numbers in which each number is the sum of the previous two numbers. It starts with 0 and 1.
+Example: 0, 1, 1, 2, 3, 5, 8, 13, 21, 34 ...
+Mathematical formula:
+[F(n)=F(n-1)+F(n-2)]
+Where: (F(0)=0), (F(1)=1)
+
+2. How does Fibonacci work?
+Fibonacci works by adding the previous two numbers to generate the next number.
+Example:
+First number = 0
+Second number = 1
+Third number = 0 + 1 = 1
+Fourth number = 1 + 1 = 2
+Fifth number = 1 + 2 = 3
+This process continues to generate the sequence.
+
+3. What is the Golden Ratio?
+The Golden Ratio is a special mathematical ratio approximately equal to 1.618.
+It is represented by the Greek letter phi (φ).
+The ratio of two consecutive Fibonacci numbers approaches the Golden Ratio as the numbers become larger.
+
+4. What is the Fibonacci Search technique?
+Fibonacci Search is a searching algorithm used to find an element in a sorted array.
+It uses Fibonacci numbers to divide the search range.
+It is similar to Binary Search.
+It reduces the search space by comparing elements at positions determined by Fibonacci numbers.
+Its time complexity is \(O(\log n)\).
+
+5. What are the real applications of the Fibonacci series?
+Computer Science: Used in Fibonacci Search and Fibonacci Heap data structures.
+Dynamic Programming: Used to understand recursion and optimize problems.
+Nature: Fibonacci-like patterns appear in flower arrangements, sunflower seed patterns and pinecones.
+Mathematics: Used in number theory and mathematical modelling.
+Algorithms: Used for studying recursive algorithms and time complexity.
+
+Part B: Assignment Questions with Answers
+Q1. Write algorithm/pseudo code to calculate Fibonacci numbers using non-recursive and recursive method.
+A. Non-Recursive (Iterative) Method
+Algorithm:
+Start.
+Read the number of terms n.
+Initialize a = 0 and b = 1.
+Repeat the following steps n times:
+Print a.
+Calculate c = a + b.
+Update a = b and b = c.
+Stop.
+Pseudocode:
+FIBONACCI_ITERATIVE(n)
+1. a = 0
+2. b = 1
+3. FOR i = 0 TO n-1
+       PRINT a
+       c = a + b
+       a = b
+       b = c
+   END FOR
+4. STOP
+
+B. Recursive Method
+Algorithm:
+Start.
+Read the number of terms n.
+Define a recursive function Fibonacci(n).
+If n <= 1, return n.
+Otherwise, return Fibonacci(n-1) + Fibonacci(n-2).
+Call the function for each term from 0 to n-1.
+Print the Fibonacci series.
+Stop.
+Pseudocode:
+FIBONACCI_RECURSIVE(n)
+1. IF n <= 1
+       RETURN n
+   ELSE
+       RETURN FIBONACCI_RECURSIVE(n-1)
+            + FIBONACCI_RECURSIVE(n-2)
+   END IF
+MAIN()
+1. READ n
+2. FOR i = 0 TO n-1
+       PRINT FIBONACCI_RECURSIVE(i)
+   END FOR
+3. STOP
+
+Q2. Explain time and space complexity of the recursive implementation to calculate Fibonacci numbers.
+Time Complexity: In the recursive method, every function call generates two more recursive calls, except for the base conditions. The recurrence relation is: [T(n) = T(n-1)+T(n-2)+O(1)]. Best case: (O(1)), for base cases (n=0) or (n=1). Worst-case time complexity: (O(2^n)).
+Space Complexity: Each recursive call occupies memory in the function call stack. The maximum recursion depth is proportional to n. Therefore, space complexity is (O(n)).
+
+Q3. Explain time and space complexity of the non-recursive implementation to calculate Fibonacci numbers.
+Time Complexity: The iterative method uses a for loop that executes n times.
+Each iteration performs constant-time operations.
+Therefore, the time complexity is (O(n)).
+Space Complexity: The algorithm uses only three variables: a, b, and c.
+It does not require recursive function calls. Therefore, auxiliary space complexity is (O(1)).
