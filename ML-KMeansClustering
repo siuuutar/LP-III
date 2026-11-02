@@ -1,0 +1,208 @@
+# ASSIGNMENT 12: K-MEANS CLUSTERING USING ELBOW METHOD
+
+# Step 1: Import required libraries
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+
+# Step 2: Load the dataset
+df = pd.read_csv("sales_data_sample.csv", encoding="latin1")
+
+print("Dataset Loaded Successfully!")
+print("\nFirst 5 Records:")
+print(df.head())
+
+print("\nDataset Shape:", df.shape)
+print("\nTotal Unique Customers:", df["CUSTOMERNAME"].nunique())
+
+
+# Step 3: Create customer-level data
+# Group sales records customer-wise
+
+customer_data = df.groupby("CUSTOMERNAME").agg(
+    Total_Sales=("SALES", "sum"),
+    Total_Orders=("ORDERNUMBER", "nunique"),
+    Average_Order_Value=("SALES", "mean"),
+    Total_Quantity=("QUANTITYORDERED", "sum"),
+    Product_Variety=("PRODUCTCODE", "nunique")
+).reset_index()
+
+print("\nCustomer-Level Dataset:")
+print(customer_data.head())
+
+print("\nCustomer Dataset Shape:", customer_data.shape)
+
+
+# Step 4: Select features for clustering
+
+X = customer_data[
+    ["Total_Sales", "Total_Orders",
+     "Average_Order_Value", "Total_Quantity",
+     "Product_Variety"]
+]
+
+
+# Step 5: Standardize the data
+
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+
+# Step 6: Determine optimal clusters using Elbow Method
+
+wcss = []
+
+for i in range(1, 11):
+
+    kmeans = KMeans(
+        n_clusters=i,
+        random_state=42,
+        n_init=10
+    )
+
+    kmeans.fit(X_scaled)
+
+    wcss.append(kmeans.inertia_)
+
+
+# Plot the Elbow Graph
+
+plt.figure(figsize=(8, 5))
+plt.plot(range(1, 11), wcss, marker="o")
+
+plt.title("Elbow Method")
+plt.xlabel("Number of Clusters (K)")
+plt.ylabel("WCSS")
+
+plt.xticks(range(1, 11))
+plt.grid(True)
+plt.show()
+
+# Step 7: Apply K-Means with 5 clusters
+
+kmeans = KMeans(
+    n_clusters=3,
+    random_state=42,
+    n_init=20
+)
+
+customer_data["Cluster"] = kmeans.fit_predict(X_scaled)
+
+
+# Step 8: Display cluster results
+
+print("\nCustomer Clustering Results:")
+print(customer_data.head(10))
+
+print("\nNumber of Customers in Each Cluster:")
+print(customer_data["Cluster"].value_counts().sort_index())
+
+
+# Step 9: Display cluster summary
+
+cluster_summary = customer_data.groupby("Cluster").agg(
+    Customer_Count=("CUSTOMERNAME", "count"),
+    Average_Sales=("Total_Sales", "mean"),
+    Average_Orders=("Total_Orders", "mean"),
+    Average_Quantity=("Total_Quantity", "mean")
+).round(2)
+
+print("\nCluster Summary:")
+print(cluster_summary)
+
+
+# Step 10: Visualize all 5 clusters
+
+plt.figure(figsize=(10, 7))
+
+plt.scatter(
+    customer_data["Total_Sales"],
+    customer_data["Total_Orders"],
+    c=customer_data["Cluster"],
+    cmap="rainbow",
+    s=100,
+    edgecolors="black"
+)
+
+plt.title("Customer Segmentation using K-Means (5 Clusters)")
+plt.xlabel("Total Sales")
+plt.ylabel("Total Orders")
+
+plt.colorbar(label="Cluster")
+plt.grid(True)
+plt.show()
+
+
+# Step 11: Display final dataset
+
+print("\nFinal Dataset with Cluster Labels:")
+print(customer_data)
+
+Q1. What is clustering?
+Clustering is an unsupervised machine learning technique used to group similar data points into clusters.
+
+Q2. What is K-Means clustering?
+K-Means is an unsupervised learning algorithm that divides data into K clusters based on similarity.
+
+Q3. What is unsupervised learning?
+Unsupervised learning is a type of machine learning in which the model learns patterns from data without labelled output.
+
+Q4. What is the meaning of K in K-Means?
+K represents the number of clusters to be created.
+
+Q5. What is a centroid?
+A centroid is the centre point of a cluster, calculated as the mean of all data points belonging to that cluster.
+
+Q6. What is the elbow method?
+The elbow method is used to determine the optimal number of clusters by plotting WCSS against different values of K.
+
+Q7. What is WCSS?
+WCSS stands for Within-Cluster Sum of Squares. It measures the sum of squared distances between data points and their respective cluster centroids.
+
+Q8. Why do we use the elbow method?
+It helps identify a suitable number of clusters by finding the point where the decrease in WCSS starts becoming slower.
+
+Q9. Why is data standardization required in K-Means?
+Standardization brings features to a similar scale so that features with larger numerical values do not dominate the clustering process.
+
+Q10. What is StandardScaler?
+StandardScaler is a preprocessing technique that transforms data to have a mean of approximately 0 and a standard deviation of approximately 1.
+
+Q11. Is K-Means supervised or unsupervised?
+K-Means is an unsupervised machine learning algorithm.
+
+Q12. Which distance measure is commonly used in K-Means?
+Euclidean distance is commonly used to calculate the distance between data points and centroids.
+
+Q13. What are the main steps of K-Means?
+Select the number of clusters K.
+Initialize K centroids.
+Assign each data point to its nearest centroid.
+Recalculate the centroids.
+Repeat until the clusters stop changing significantly.
+
+Q14. What is the purpose of fit_predict()?
+It trains the K-Means model and directly returns the cluster label assigned to each data point.
+
+Q15. What is the purpose of random_state=42?
+It ensures reproducible results by controlling the random initialization.
+
+Q16. What is n_init=20 in K-Means?
+It specifies that K-Means will run 20 times with different centroid initializations and retain the best result based on inertia.
+
+Q17. What is the difference between K-Means and hierarchical clustering?
+K-Means divides data into a predefined number of clusters, whereas hierarchical clustering creates a hierarchy of clusters represented using a dendrogram.
+
+Q18. Can K-Means work with categorical data?
+Standard K-Means works with numerical data. Categorical features need suitable encoding or a different clustering algorithm.
+
+Q19. What are the applications of K-Means clustering?
+Customer segmentation, image compression, market analysis, document grouping and anomaly detection.
+
+Q20. What are the limitations of K-Means?
+The number of clusters must be specified.
+It is sensitive to outliers.
+It is affected by feature scaling.
+Different initial centroids can produce different results.
