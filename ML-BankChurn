@@ -1,0 +1,320 @@
+# BANK CUSTOMER CHURN PREDICTION USING NEURAL NETWORK
+
+# Step 1: Import libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.neural_network import MLPClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+# Step 2: Read dataset
+df = pd.read_csv("Churn_Modelling.csv")
+
+print("Dataset Shape:", df.shape)
+print("\nFirst 5 Records:")
+display(df.head())
+
+print("\nMissing Values:", df.isnull().sum().sum())
+
+# Step 3: Separate input features and target
+# Remove unnecessary identifier columns
+X = df.drop(columns=["RowNumber", "CustomerId", "Surname", "Exited"])
+y = df["Exited"]
+
+print("\nInput Features:", X.shape)
+print("Target:", y.shape)
+
+print("\nTarget Distribution:")
+print(y.value_counts())
+
+# Step 4: Identify numerical and categorical columns
+numerical_columns = [
+    "CreditScore", "Age", "Tenure", "Balance",
+    "NumOfProducts", "HasCrCard", "IsActiveMember",
+    "EstimatedSalary"
+]
+
+categorical_columns = ["Geography", "Gender"]
+
+# Step 5: Split dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
+
+print("\nTraining Data:", X_train.shape)
+print("Testing Data:", X_test.shape)
+
+# Step 6: Normalize and encode the data
+preprocessor = ColumnTransformer(
+    transformers=[
+        ("num", StandardScaler(), numerical_columns),
+        ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_columns)
+    ]
+)
+
+# Fit preprocessing only on training data
+X_train_scaled = preprocessor.fit_transform(X_train)
+X_test_scaled = preprocessor.transform(X_test)
+
+# Step 7: Build the basic neural network
+basic_model = MLPClassifier(
+    hidden_layer_sizes=(32,),
+    activation="relu",
+    solver="adam",
+    alpha=0.0001,
+    learning_rate_init=0.001,
+    max_iter=500,
+    random_state=42
+)
+
+# Train basic model
+basic_model.fit(X_train_scaled, y_train)
+
+# Predict using basic model
+basic_pred = basic_model.predict(X_test_scaled)
+
+basic_accuracy = accuracy_score(y_test, basic_pred)
+basic_cm = confusion_matrix(y_test, basic_pred)
+
+print("\n========== BASIC NEURAL NETWORK ==========")
+print("Accuracy:", round(basic_accuracy * 100, 2), "%")
+print("\nConfusion Matrix:")
+print(basic_cm)
+
+# Step 8: Improve the model using an ensemble of neural networks
+# Neural Network 1
+model1 = MLPClassifier(
+    hidden_layer_sizes=(32,),
+    activation="relu",
+    solver="adam",
+    alpha=0.0001,
+    learning_rate_init=0.001,
+    max_iter=500,
+    random_state=10
+)
+
+# Neural Network 2
+model2 = MLPClassifier(
+    hidden_layer_sizes=(48,),
+    activation="relu",
+    solver="adam",
+    alpha=0.0001,
+    learning_rate_init=0.001,
+    max_iter=500,
+    random_state=11
+)
+
+# Step 9: Train both neural networks
+model1.fit(X_train_scaled, y_train)
+model2.fit(X_train_scaled, y_train)
+
+# Step 10: Combine predictions by averaging probabilities
+prob1 = model1.predict_proba(X_test_scaled)[:, 1]
+prob2 = model2.predict_proba(X_test_scaled)[:, 1]
+
+average_probability = (prob1 + prob2) / 2
+
+# Final classification
+improved_pred = (average_probability >= 0.5).astype(int)
+
+# Step 11: Calculate improved accuracy
+improved_accuracy = accuracy_score(y_test, improved_pred)
+
+improved_cm = confusion_matrix(y_test, improved_pred)
+
+print("\n========== IMPROVED NEURAL NETWORK ==========")
+print("Accuracy:", round(improved_accuracy * 100, 2), "%")
+
+print("\nConfusion Matrix:")
+print(improved_cm)
+
+# Step 12: Classification report
+print("\nClassification Report:")
+print(classification_report(
+    y_test,
+    improved_pred,
+    target_names=["Not Exited", "Exited"]
+))
+
+# Step 13: Display confusion matrices
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+sns.heatmap(
+    basic_cm,
+    annot=True,
+    fmt="d",
+    cmap="Blues",
+    xticklabels=["Not Exited", "Exited"],
+    yticklabels=["Not Exited", "Exited"],
+    ax=axes[0]
+)
+
+axes[0].set_title("Basic Neural Network")
+axes[0].set_xlabel("Predicted")
+axes[0].set_ylabel("Actual")
+
+sns.heatmap(
+    improved_cm,
+    annot=True,
+    fmt="d",
+    cmap="Greens",
+    xticklabels=["Not Exited", "Exited"],
+    yticklabels=["Not Exited", "Exited"],
+    ax=axes[1]
+)
+
+axes[1].set_title("Improved Neural Network")
+axes[1].set_xlabel("Predicted")
+axes[1].set_ylabel("Actual")
+
+plt.tight_layout()
+plt.show()
+
+# Step 14: Compare model accuracy
+comparison = pd.DataFrame({
+    "Model": ["Basic Neural Network", "Improved Neural Network"],
+    "Accuracy (%)": [
+        basic_accuracy * 100,
+        improved_accuracy * 100
+    ]
+})
+
+print("\nFINAL MODEL COMPARISON:")
+display(comparison.round(2))
+
+# Step 15: Plot accuracy comparison
+plt.figure(figsize=(10, 6))
+
+sns.barplot(
+    data=comparison,
+    x="Model",
+    y="Accuracy (%)"
+)
+
+plt.title("Basic vs Improved Neural Network")
+plt.ylabel("Accuracy (%)")
+plt.ylim(0, 100)
+plt.show()
+
+Q1) What is Normalization?
+Normalization is a data preprocessing technique used to scale numerical values into a fixed range, generally between 0 and 1.
+It ensures that all features have a similar scale and prevents features with larger values from dominating the learning process.
+Formula:
+\[ X_{normalized}=\frac{X-X_{min}}{X_{max}-X_{min}} \]
+Example: If the minimum value is 10, maximum value is 50, and the given value is 30:
+\[ X_{normalized}=\frac{30-10}{50-10}=0.5 \]
+
+Q2) What is Standardization?
+Standardization is a data preprocessing technique that transforms numerical data so that it has a mean of 0 and a standard deviation of 1.
+It is useful when different features have different measurement scales.
+\(z = \frac{x - \mu}{\sigma}\)
+\(z=\frac{(\text{1.2})-(\text{0})}{\text{1}}=\text{1.2}\)
+\(\Phi(z)\approx \text{88.5\%}\)
+\(x\)
+\(\mu\)
+\(\sigma\)
+μxΦ(z)
+Give feedback
+Example: Standardization is used to bring features such as CreditScore, Age, Balance, and EstimatedSalary to a comparable scale.
+
+Q3) Explain Confusion Matrix?
+A confusion matrix is a table used to evaluate the performance of a classification model by comparing actual values with predicted values.
+It consists of four components:
+True Positive (TP): Positive cases correctly predicted as positive.
+True Negative (TN): Negative cases correctly predicted as negative.
+False Positive (FP): Negative cases incorrectly predicted as positive.
+False Negative (FN): Positive cases incorrectly predicted as negative.
+For bank customer churn prediction:
+Positive class (1): Customer exited.
+Negative class (0): Customer did not exit.
+
+Q4) Define the following: Classification Accuracy, Misclassification Rate, Precision.
+1. Classification Accuracy
+It measures the percentage of correctly classified observations out of the total observations.
+\[ Accuracy=\frac{TP+TN}{TP+TN+FP+FN} \]
+2. Misclassification Rate
+It measures the percentage of incorrectly classified observations out of the total observations.
+\[ Misclassification\ Rate=\frac{FP+FN}{TP+TN+FP+FN} \]
+3. Precision
+It measures the proportion of correctly predicted positive cases among all predicted positive cases.
+\[ Precision=\frac{TP}{TP+FP} \]
+
+Q5) One Example of Confusion Matrix?
+Consider an example of a classification model that predicts whether customers will leave a bank.
+Actual / Predicted Positive (Exited) Negative (Not Exited);
+Positive (Exited) 40 (TP) 10 (FN);
+Negative (Not Exited) 5 (FP) 45 (TN)
+Here: TP = 40, TN = 45, FP = 5, FN = 10
+Classification Accuracy:
+\[ =\frac{40+45}{40+45+5+10}\times100 \]
+\[ =\boxed{85\%} \]
+Misclassification Rate:
+\[ =\frac{5+10}{100}\times100 \]
+\[ =\boxed{15\%} \]
+Precision:
+\[ =\frac{40}{40+5}\times100 \]
+\[ =\boxed{88.89\%} \]
+
+Additional viva questions and answers
+Q1. What is customer churn?
+Customer churn refers to customers leaving or discontinuing the services of a company or bank.
+Q2. What is a neural network?
+A neural network is a machine learning model inspired by the human brain that learns patterns from data.
+Q3. What is ANN?
+ANN stands for Artificial Neural Network. It consists of interconnected artificial neurons arranged in different layers.
+Q4. What is MLP?
+MLP stands for Multi-Layer Perceptron. It is a feedforward neural network containing input, hidden, and output layers.
+Q5. What are the different layers of a neural network?
+Input Layer
+Hidden Layer
+Output Layer
+Q6. What is an activation function?
+An activation function determines the output of a neuron and introduces non-linearity into a neural network.
+Q7. What is ReLU?
+ReLU stands for Rectified Linear Unit. It returns zero for negative inputs and the input itself for positive inputs.
+Q8. What is the Adam optimizer?
+Adam is an optimization algorithm used to update neural network weights during training.
+Q9. What is an epoch?
+An epoch is one complete pass of the entire training dataset through a neural network.
+Q10. What is overfitting?
+Overfitting occurs when a model learns the training data too closely and performs poorly on unseen data.
+Q11. What is underfitting?
+Underfitting occurs when a model is too simple to learn the patterns present in the dataset.
+Q12. Why is StandardScaler used?
+StandardScaler transforms numerical features to have a mean of 0 and standard deviation of 1.
+Q13. What is One-Hot Encoding?
+It converts categorical values into numerical binary columns so that machine learning algorithms can process them.
+Q14. Why are CustomerId and Surname removed?
+They are identifiers and do not provide useful predictive information for customer churn classification.
+Q15. What is oversampling?
+Oversampling is a technique used to increase the number of samples in the minority class to balance an imbalanced dataset.
+Q16. What is early stopping?
+Early stopping stops model training when validation performance stops improving, helping to prevent overfitting.
+Q17. What is the target variable in this experiment?
+Exited is the target variable. It indicates whether a customer has left the bank or not.
+Q18. Which Python library is used to implement the neural network?
+Scikit-learn, using its MLPClassifier class.
+Q19. What is the difference between classification and regression?
+Classification predicts categories or classes, whereas regression predicts continuous numerical values.
+Q20. What is the purpose of a confusion matrix?
+It helps identify correct and incorrect predictions and evaluate the performance of a classification model.
+Q21. Why do we divide the dataset into training and testing sets?
+Training data is used to train the model, while testing data evaluates its performance on unseen data.
+Q22. Why is ReLU used in the hidden layers?
+ReLU introduces non-linearity and helps the neural network learn complex relationships between input features.
+Q23. What is an ensemble method?
+An ensemble method combines predictions from multiple models to produce a final prediction that may perform better than an individual model.
+Q24. How did you improve the neural network model?
+I used two neural networks with different hidden-layer sizes and combined their prediction probabilities to improve classification accuracy.
+Q25. What is the accuracy achieved in this experiment?
+The basic neural network achieved 86.60% accuracy, while the improved neural network ensemble achieved 86.85% accuracy on the test dataset.
+Q26. Why can accuracy alone be misleading?
+Accuracy may not properly represent model performance when the dataset is imbalanced. Precision, recall, F1 score, and the confusion matrix should also be considered.
