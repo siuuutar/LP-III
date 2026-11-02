@@ -1,0 +1,104 @@
+# N-Queens Problem using Backtracking
+
+def is_safe(board, row, col, n):
+
+    # Check all existing Queens
+    for i in range(n):
+        for j in range(n):
+            if board[i][j] == 1:
+
+                # Same row, column or diagonal
+                if (i == row or j == col or
+                    abs(i - row) == abs(j - col)):
+                    return False
+
+    return True
+
+
+def solve_n_queens(board, row, n, first_row):
+
+    # All rows completed
+    if row == n:
+        return True
+
+    # Skip the row containing the first Queen
+    if row == first_row:
+        return solve_n_queens(board, row + 1, n, first_row)
+
+    # Try placing Queen in each column
+    for col in range(n):
+
+        if is_safe(board, row, col, n):
+
+            board[row][col] = 1
+
+            if solve_n_queens(board, row + 1, n, first_row):
+                return True
+
+            # Backtrack
+            board[row][col] = 0
+
+    return False
+
+
+def print_board(board, n):
+    for i in range(n):
+        for j in range(n):
+            print(board[i][j], end=" ")
+        print()
+
+
+# Main Program
+n = int(input("Enter the value of N: "))
+
+if n < 1:
+    print("Enter a positive integer.")
+
+elif n == 2 or n == 3:
+    print("Solution does not exist for N =", n)
+
+else:
+    board = [[0 for j in range(n)] for i in range(n)]
+
+    print("Enter the position of the first Queen:")
+
+    row = int(input("Enter row (1 to N): ")) - 1
+    col = int(input("Enter column (1 to N): ")) - 1
+
+    if row < 0 or row >= n or col < 0 or col >= n:
+        print("Invalid Queen position.")
+
+    else:
+        # Place first Queen
+        board[row][col] = 1
+
+        print("\nInitial Matrix:")
+        print_board(board, n)
+
+        # Check remaining positions
+        if solve_n_queens(board, 0, n, row):
+            print("\nFinal N-Queens Matrix:")
+            print_board(board, n)
+
+            print("\nAll", n, "Queens placed successfully.")
+
+        else:
+            print("\nNo solution exists for the given first Queen position.")
+
+The N-Queens problem is a classic backtracking problem in which N Queens are placed on an N × N chessboard such that no two Queens attack each other. Therefore, no two Queens can be placed in the same row, column, or diagonal.
+
+Backtracking is an algorithmic technique used to solve problems by trying possible solutions step by step. It builds a solution incrementally and abandons (backtracks) a choice as soon as it determines that the choice cannot lead to a valid solution.
+The basic steps of backtracking are:
+1. Select a possible choice.
+2. Check whether the choice is valid or safe.
+3. If valid, proceed to the next step.
+4. If no valid choice is possible, return to the previous step and try another choice.
+5. Continue until a complete solution is obtained.
+In the N-Queens problem, backtracking places one Queen in each row. If a Queen conflicts with an already placed Queen, another position is tried. This continues until all Queens are placed without conflicts.
+Backtracking is commonly used in: N-Queens, Sudoku, maze solving, graph coloring, and subset-sum problems.
+
+What is the time complexity of the N-Queens problem?
+O(N!) in the worst case for the standard backtracking approach.
+
+What is the space complexity?
+O(N²) for the board matrix, plus O(N) recursion stack space.
