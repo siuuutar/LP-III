@@ -1,0 +1,373 @@
+pip install pandas numpy matplotlib scikit-learn
+
+# ASSIGNMENT 8: UBER FARE PREDICTION
+
+# STEP 1: Import Libraries
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
+
+from sklearn.metrics import (
+    r2_score,
+    mean_squared_error,
+    mean_absolute_error
+)
+
+# STEP 2: Load Dataset
+
+data = pd.read_csv("uber.csv")
+
+print("Original Dataset:")
+print(data.head())
+
+print("\nDataset Shape:", data.shape)
+
+print("\nMissing Values:")
+print(data.isnull().sum())
+
+
+# STEP 3: Data Preprocessing
+
+# Remove unnecessary columns
+data = data.drop(columns=["Unnamed: 0", "key"], errors="ignore")
+
+# Remove missing values
+data = data.dropna()
+
+# Remove invalid fare amounts
+data = data[(data["fare_amount"] > 0) &
+            (data["fare_amount"] <= 100)]
+
+# Keep valid passenger counts
+data = data[data["passenger_count"].between(1, 6)]
+
+# Remove invalid geographical coordinates
+data = data[
+    data["pickup_longitude"].between(-75, -72) &
+    data["dropoff_longitude"].between(-75, -72) &
+    data["pickup_latitude"].between(40, 42) &
+    data["dropoff_latitude"].between(40, 42)
+]
+
+# Convert pickup_datetime into datetime format
+data["pickup_datetime"] = pd.to_datetime(
+    data["pickup_datetime"], utc=True, errors="coerce"
+)
+
+data = data.dropna(subset=["pickup_datetime"])
+
+print("\nDataset after preprocessing:")
+print(data.head())
+print("\nShape after preprocessing:", data.shape)
+
+
+# STEP 4: Feature Engineering
+
+# Extract date and time information
+data["hour"] = data["pickup_datetime"].dt.hour
+data["day"] = data["pickup_datetime"].dt.day
+data["month"] = data["pickup_datetime"].dt.month
+data["year"] = data["pickup_datetime"].dt.year
+data["day_of_week"] = data["pickup_datetime"].dt.dayofweek
+
+# Calculate distance using Haversine Formula
+
+def haversine(lat1, lon1, lat2, lon2):
+
+    lat1, lon1, lat2, lon2 = map(
+        np.radians, [lat1, lon1, lat2, lon2]
+    )
+
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+
+    a = (np.sin(dlat / 2) ** 2 +
+         np.cos(lat1) * np.cos(lat2) *
+         np.sin(dlon / 2) ** 2)
+
+    distance = 6371 * 2 * np.arcsin(np.sqrt(a))
+
+    return distance
+
+
+data["distance_km"] = haversine(
+    data["pickup_latitude"],
+    data["pickup_longitude"],
+    data["dropoff_latitude"],
+    data["dropoff_longitude"]
+)
+
+# Remove unusually large distances
+data = data[data["distance_km"] <= 100]
+
+# Display final dataset
+print("\nFinal Dataset:")
+print(data.head())
+
+print("\nFinal Dataset Shape:", data.shape)
+
+
+# STEP 5: Visualize Outliers Using Box Plot
+
+plt.figure(figsize=(8, 4))
+plt.boxplot(data["fare_amount"])
+plt.title("Box Plot of Uber Fare Amount")
+plt.ylabel("Fare Amount")
+plt.show()
+
+
+# STEP 6: Correlation Analysis
+
+plt.figure(figsize=(10, 6))
+
+corr = data.select_dtypes(include=np.number).corr()
+
+plt.imshow(corr, cmap="coolwarm", aspect="auto")
+plt.colorbar()
+
+plt.xticks(range(len(corr.columns)),
+           corr.columns, rotation=90)
+
+plt.yticks(range(len(corr.columns)),
+           corr.columns)
+
+plt.title("Correlation Heatmap")
+plt.tight_layout()
+plt.show()
+
+
+# STEP 7: Select Features and Target
+
+features = [
+    "pickup_longitude",
+    "pickup_latitude",
+    "dropoff_longitude",
+    "dropoff_latitude",
+    "passenger_count",
+    "hour",
+    "day",
+    "month",
+    "year",
+    "day_of_week",
+    "distance_km"
+]
+
+X = data[features]
+y = data["fare_amount"]
+
+
+# STEP 8: Split Dataset into Training and Testing Sets
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+print("\nTraining Data:", X_train.shape)
+print("Testing Data:", X_test.shape)
+
+
+# STEP 9: Implement Linear Regression
+
+lr_model = LinearRegression()
+
+lr_model.fit(X_train, y_train)
+
+lr_predictions = lr_model.predict(X_test)
+
+
+# STEP 10: Implement Random Forest Regression
+
+rf_model = RandomForestRegressor(
+    n_estimators=100,
+    random_state=42,
+    n_jobs=-1
+)
+
+# Use a random sample of training data to reduce
+# execution time on a local Jupyter Notebook.
+
+rf_sample = X_train.sample(
+    n=min(30000, len(X_train)),
+    random_state=42
+)
+
+rf_target = y_train.loc[rf_sample.index]
+
+rf_model.fit(rf_sample, rf_target)
+
+rf_predictions = rf_model.predict(X_test)
+
+
+# STEP 11: Evaluate Both Models
+
+def evaluate_model(name, actual, predicted):
+
+    r2 = r2_score(actual, predicted)
+    mse = mean_squared_error(actual, predicted)
+    rmse = np.sqrt(mse)
+    mae = mean_absolute_error(actual, predicted)
+
+    print("\n", name)
+    print("---------------------------")
+    print("R2 Score:", round(r2, 4))
+    print("MSE:", round(mse, 4))
+    print("RMSE:", round(rmse, 4))
+    print("MAE:", round(mae, 4))
+
+    return [r2, mse, rmse, mae]
+
+
+lr_results = evaluate_model(
+    "Linear Regression",
+    y_test,
+    lr_predictions
+)
+
+rf_results = evaluate_model(
+    "Random Forest Regression",
+    y_test,
+    rf_predictions
+)
+
+
+# STEP 12: Compare Model Performance
+
+comparison = pd.DataFrame({
+    "Model": ["Linear Regression", "Random Forest"],
+    "R2 Score": [lr_results[0], rf_results[0]],
+    "MSE": [lr_results[1], rf_results[1]],
+    "RMSE": [lr_results[2], rf_results[2]],
+    "MAE": [lr_results[3], rf_results[3]]
+})
+
+print("\nMODEL COMPARISON:")
+print(comparison.to_string(index=False))
+
+
+# STEP 13: Visualize Model Comparison
+
+plt.figure(figsize=(8, 5))
+
+plt.bar(
+    comparison["Model"],
+    comparison["R2 Score"]
+)
+
+plt.title("Comparison of R2 Scores")
+plt.xlabel("Regression Models")
+plt.ylabel("R2 Score")
+plt.show()
+
+
+# STEP 14: Predict Uber Fare for a Sample Ride
+
+sample_ride = X_test.iloc[[0]]
+
+predicted_fare = rf_model.predict(sample_ride)
+
+print("\nSample Ride Prediction")
+print("Predicted Uber Fare: $", round(predicted_fare[0], 2))
+print("Actual Uber Fare: $", round(y_test.iloc[0], 2))
+
+Q1. What is data preprocessing?
+Data preprocessing is the process of converting raw data into a clean and suitable format for machine learning algorithms.
+It involves the following steps:
+Collecting the dataset.
+Importing required libraries.
+Handling missing values.
+Removing duplicate and unnecessary data.
+Identifying and handling outliers.
+Splitting data into training and testing sets.
+
+Q2. Define Outliers?
+Outliers are data points that differ significantly from other observations in a dataset.
+Types of outliers:
+Global Outliers: Data points that deviate significantly from the entire dataset.
+Collective Outliers: A group of data points that behaves differently from the remaining dataset.
+Contextual Outliers: Data points that are abnormal under specific conditions or contexts.
+
+Q3. What is Linear Regression?
+Linear Regression is a supervised machine learning algorithm used to predict continuous numerical values.
+It establishes a linear relationship between dependent and independent variables.
+Applications:
+House price prediction.
+Salary prediction.
+Sales forecasting.
+Uber fare prediction.
+
+Q4. What is Random Forest Algorithm?
+Random Forest is a supervised machine learning algorithm based on ensemble learning.
+It creates multiple decision trees using different subsets of data and combines their predictions.
+In regression, it calculates the average prediction of all decision trees to obtain the final result.
+Advantages:
+High prediction accuracy.
+Reduces overfitting compared to a single decision tree.
+Handles complex relationships.
+Works for both classification and regression.
+
+Q5. Explain: pandas, numpy?
+Pandas:
+Pandas is a Python library used for data manipulation and analysis. It provides DataFrame and Series data structures to handle tabular data.
+NumPy:
+NumPy is a Python library used for numerical computing. It provides arrays, mathematical functions and operations for efficient data processing.
+
+6. Additional viva questions and answers
+1
+What is regression?
+Regression is a supervised learning technique used to predict continuous values.
+2
+What is the target variable in this experiment?
+fare_amount.
+3
+What is the purpose of train-test split?
+To train the model and evaluate its performance on unseen data.
+4
+What is the use of random_state=42?
+It ensures reproducible results.
+5
+What is the use of fit()?
+It trains the machine learning model.
+6
+What is the use of predict()?
+It predicts output using the trained model.
+7
+What is overfitting?
+When a model performs well on training data but poorly on unseen data.
+8
+What is ensemble learning?
+Combining multiple models to improve prediction performance.
+9
+What is a decision tree?
+A tree-based algorithm that makes decisions using conditions on features.
+10
+What is MSE?
+Mean Squared Error is the average of squared differences between actual and predicted values.
+11
+What is MAE?
+Mean Absolute Error is the average absolute difference between actual and predicted values.
+12
+What is RMSE?
+Square root of Mean Squared Error.
+13
+Which model performed better?
+Random Forest Regression.
+14
+What is a box plot?
+A graph used to visualize data distribution and identify outliers.
+15
+What is correlation?
+A statistical measure that describes the relationship between two variables.
+16
+Why do we use Matplotlib?
+To create graphs and visualize data.
+17
+What is feature engineering?
+Creating or transforming features to improve model performance.
+18
+Why is distance important in Uber fare prediction?
+Ride distance is an important factor affecting the fare.
