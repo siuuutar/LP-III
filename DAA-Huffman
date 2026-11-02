@@ -1,0 +1,182 @@
+import heapq
+
+# Node class for Huffman Tree
+class Node:
+    def __init__(self, char, freq):
+        self.char = char
+        self.freq = freq
+        self.left = None
+        self.right = None
+
+    def __lt__(self, other):
+        return self.freq < other.freq
+
+
+# Generate Huffman Codes
+def generate_codes(root, code, huffman_codes):
+    if root is None:
+        return
+
+    # Leaf node
+    if root.char is not None:
+        huffman_codes[root.char] = code if code else "0"
+        return
+
+    generate_codes(root.left, code + "0", huffman_codes)
+    generate_codes(root.right, code + "1", huffman_codes)
+
+
+# Huffman Encoding Function
+def huffman_encoding(text):
+    frequency = {}
+
+    # Calculate frequency of each character
+    for char in text:
+        frequency[char] = frequency.get(char, 0) + 1
+
+    # Create priority queue
+    heap = []
+
+    for char, freq in frequency.items():
+        heapq.heappush(heap, Node(char, freq))
+
+    # Build Huffman Tree
+    while len(heap) > 1:
+        left = heapq.heappop(heap)
+        right = heapq.heappop(heap)
+
+        new_node = Node(None, left.freq + right.freq)
+        new_node.left = left
+        new_node.right = right
+
+        heapq.heappush(heap, new_node)
+
+    # Generate Huffman Codes
+    root = heap[0]
+    huffman_codes = {}
+    generate_codes(root, "", huffman_codes)
+
+    # Display Huffman Table
+    print("\nHuffman Encoding Table")
+    print("-" * 45)
+    print("{:<12} {:<12} {:<15}".format(
+        "Character", "Frequency", "Huffman Code"))
+    print("-" * 45)
+
+    total_bits = 0
+
+    for char in sorted(frequency):
+        code = huffman_codes[char]
+        bits = frequency[char] * len(code)
+        total_bits += bits
+
+        display_char = "' '" if char == " " else char
+
+        print("{:<12} {:<12} {:<15}".format(
+            display_char, frequency[char], code))
+
+    print("-" * 45)
+    print("Total Bits Required:", total_bits)
+
+    # Display encoded string
+    encoded_text = ''.join(huffman_codes[ch] for ch in text)
+
+    print("\nOriginal Text:", text)
+    print("Encoded Text:", encoded_text)
+
+
+# Main Program
+text = input("Enter the text: ")
+
+if text:
+    huffman_encoding(text)
+else:
+    print("Please enter a valid text.")
+
+Part A: Viva Questions
+Data structure? -> Min-Heap / Priority Queue 
+
+Q1. What is Huffman Encoding?
+Huffman Encoding is a lossless data compression technique that assigns variable-length binary codes to characters based on their frequency of occurrence.
+Frequently occurring characters get shorter codes.
+Less frequently occurring characters get longer codes.
+It reduces the total number of bits required to store data.
+
+Q2. Which tree is used in Huffman encoding? Give one Example.
+Huffman Encoding uses a binary tree called a Huffman Tree.
+It is a full binary tree in which:
+Each leaf node represents a character and its frequency.
+Each internal node represents the sum of the frequencies of its child nodes.
+The left edge is assigned 0 and the right edge is assigned 1.
+Example:
+Consider three characters with frequencies: Character Frequency, A 5, B 7, C 10
+First, combine A and B (5 + 7 = 12). Then combine the resulting node with C (12 + 10 = 22).
+      (22)
+      /    \
+C(10)  (12)
+     0     /  \
+       A(5) B(7)
+          0    1
+Character  Huffman Code: A 10, B 11, C 0.
+
+Q3. Why Huffman coding is lossless compression?
+Huffman coding is called lossless compression because the original data can be recovered exactly without losing any information.
+Reasons:
+Every character has a unique binary code.
+It uses prefix-free codes, meaning no code is the prefix of another code.
+The encoded data can be decoded using the Huffman Tree.
+No original information is lost during compression.
+
+Part B: Assignment Questions
+Q1. Write algorithm/pseudo code for Huffman Encoding.
+Start.
+Accept the input text.
+Calculate the frequency of each character.
+Create a leaf node for every character.
+Insert all nodes into a min-priority queue.
+Repeat until only one node remains:
+Remove the two nodes with the minimum frequencies.
+Create a new internal node with the sum of their frequencies.
+Make the two removed nodes its left and right children.
+Insert the new node into the priority queue.
+The remaining node becomes the root of the Huffman Tree.
+Traverse the tree and assign 0 to the left edge and 1 to the right edge.
+Generate the binary code for each character.
+Display the Huffman codes.
+Calculate the total bits required.
+Stop.
+
+Q2. Explain complexity analysis of Huffman Encoding using a greedy strategy.
+Time: O(k log k)
+Space Complexity: O(k)
+
+Q3. Find Huffman code for each symbol in following text:
+ABCCDEBABFFBACBEBDFAAAABCDEEDCCBFEBFCAEFBACBEBDFAAAABC
+Step 1: Calculate frequency of each character.
+Character Frequency: A-13, B-13, C-9, D-5, E-7, F-7
+Total-54
+Step 3: Generate Huffman Codes.
+Assign 0 to the left branch and 1 to the right branch.
+FINAL HUFFMAN TREE
+         (54)
+        /      \
+     (25)    (29)
+      /  \       /  \
+12 A13  B13  16
+ /  \                /  \
+D5   E7     F7  C9
+Final Huffman Encoding Table:
+Character-Frequency-Huffman Code-Bits Required
+A-13-01-26
+B-13-10-26
+C-9-111-27
+D-5-000-15
+E-7-001-21
+F-7-110-21
+Total-54-""-136 bits
+
+Q4. How do you calculate average code length in Huffman coding? Explain with example.
+Average code length is the average number of bits required to represent one character in the input text.
+Formula: Lavg = frac (sum fi x li) / sum fi
+
+
