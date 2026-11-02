@@ -1,0 +1,120 @@
+# 0-1 Knapsack using Dynamic Programming
+
+def knapsack(weights, profits, capacity):
+    n = len(weights)
+
+    # Create DP table
+    dp = [[0 for j in range(capacity + 1)]
+          for i in range(n + 1)]
+
+    # Fill DP table
+    for i in range(1, n + 1):
+        for w in range(capacity + 1):
+
+            if weights[i - 1] <= w:
+                dp[i][w] = max(
+                    dp[i - 1][w],
+                    profits[i - 1] + dp[i - 1][w - weights[i - 1]]
+                )
+            else:
+                dp[i][w] = dp[i - 1][w]
+
+    # Display DP table
+    print("\nDynamic Programming Table")
+    print("-" * 50)
+
+    print("Item/Cap", end="")
+    for w in range(capacity + 1):
+        print(f"{w:5}", end="")
+
+    for i in range(n + 1):
+        label = "0" if i == 0 else f"Item {i}"
+        print(f"\n{label:<9}", end="")
+
+        for w in range(capacity + 1):
+            print(f"{dp[i][w]:5}", end="")
+
+    print("\n" + "-" * 50)
+
+    # Find selected items
+    selected = []
+    w = capacity
+
+    for i in range(n, 0, -1):
+        if dp[i][w] != dp[i - 1][w]:
+            selected.append(i)
+            w -= weights[i - 1]
+
+    selected.reverse()
+
+    # Display result
+    print("\nMaximum Profit:", dp[n][capacity])
+
+    print("\nSelected Items:")
+    total_weight = 0
+
+    for i in selected:
+        print(f"Item {i}: Weight = {weights[i-1]}, "
+              f"Profit = {profits[i-1]}")
+        total_weight += weights[i - 1]
+
+    print("Total Weight:", total_weight)
+
+
+# Main Program
+n = int(input("Enter number of items: "))
+
+weights = list(map(int, input("Enter weights: ").split()))
+profits = list(map(int, input("Enter profits: ").split()))
+
+capacity = int(input("Enter knapsack capacity: "))
+
+# Input validation
+if n <= 0 or len(weights) != n or len(profits) != n:
+    print("Invalid number of items or input data.")
+
+elif capacity < 0 or any(x < 0 for x in weights + profits):
+    print("Weights, profits and capacity must be non-negative.")
+
+else:
+    knapsack(weights, profits, capacity)
+
+Algorithm 
+Start.
+Accept the number of items, weights, profits and knapsack capacity.
+Create a DP table of size (n+1) × (W+1).
+Initialize the first row and first column with zero.
+Fill the table using the following recurrence:
+T (i , j) = max { T ( i-1 , j ) , valuei + T( i-1 , j – weighti ) } 
+The last cell of the DP table gives the maximum profit.
+Trace the table from bottom to top to identify selected items.
+Display maximum profit and selected items.
+Stop.
+
+Important Viva Questions
+Q1. What is Dynamic Programming?
+Dynamic Programming is an algorithmic technique that solves complex problems by dividing them into smaller overlapping subproblems and storing their results to avoid repeated calculations.
+
+Q2. Explain the concept of 0-1 Knapsack.
+In the 0-1 Knapsack problem, each item is either completely selected (1) or completely rejected (0). Fractions of items are not allowed.
+
+Q3. What is the difference between Dynamic Programming and Branch and Bound? Which is best?
+Dynamic Programming Branch and Bound
+1. Solves problems by dividing them into overlapping subproblems. Solves problems by dividing them into smaller subproblems using a state-space tree.
+2. Stores solutions in a table to avoid repeated calculations. Uses bounds to eliminate unpromising solutions.
+3. Uses the concept of optimal substructure. Uses branching and bounding techniques.
+4. Generally requires more memory for storing DP tables. Memory depends on the search strategy and number of active nodes.
+5. For 0-1 Knapsack, time complexity is O(nW). Worst-case time complexity is O(2ⁿ).
+
+Q4. What is the objective of the Knapsack problem?
+To maximize total profit without exceeding the given weight capacity.
+
+Q5. Why is it called a 0-1 Knapsack problem?
+Because every item has only two choices: select it (1) or reject it (0).
+
+Q6. What is the time complexity of 0-1 Knapsack using Dynamic Programming?
+O(nW), where n is the number of items and W is the capacity.
+
+Q7. What is the space complexity?
+O(nW), because a two-dimensional DP table is used.
+
