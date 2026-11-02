@@ -1,0 +1,150 @@
+import random
+import time
+
+# Partition function
+def partition(arr, low, high, count):
+    pivot = arr[high]
+    i = low - 1
+
+    for j in range(low, high):
+        count[0] += 1
+
+        if arr[j] <= pivot:
+            i += 1
+            arr[i], arr[j] = arr[j], arr[i]
+
+    arr[i + 1], arr[high] = arr[high], arr[i + 1]
+
+    return i + 1
+
+
+# Deterministic Quick Sort
+def deterministic_quick_sort(arr, low, high, count):
+    if low < high:
+        pi = partition(arr, low, high, count)
+
+        deterministic_quick_sort(arr, low, pi - 1, count)
+        deterministic_quick_sort(arr, pi + 1, high, count)
+
+
+# Randomized Quick Sort
+def randomized_quick_sort(arr, low, high, count):
+    if low < high:
+
+        # Select random pivot
+        random_index = random.randint(low, high)
+
+        # Move random pivot to the last position
+        arr[random_index], arr[high] = arr[high], arr[random_index]
+
+        pi = partition(arr, low, high, count)
+
+        randomized_quick_sort(arr, low, pi - 1, count)
+        randomized_quick_sort(arr, pi + 1, high, count)
+
+
+# Main Program
+arr = list(map(int, input("Enter array elements: ").split()))
+
+# Deterministic Quick Sort
+arr1 = arr.copy()
+count1 = [0]
+
+start = time.perf_counter()
+
+deterministic_quick_sort(arr1, 0, len(arr1) - 1, count1)
+
+time1 = time.perf_counter() - start
+
+# Randomized Quick Sort
+arr2 = arr.copy()
+count2 = [0]
+
+start = time.perf_counter()
+
+randomized_quick_sort(arr2, 0, len(arr2) - 1, count2)
+
+time2 = time.perf_counter() - start
+
+
+# Display Results
+print("\n----- QUICK SORT ANALYSIS -----")
+
+print("\nDeterministic Quick Sort:")
+print("Sorted Array:", arr1)
+print("Number of Comparisons:", count1[0])
+print("Execution Time:", time1, "seconds")
+
+print("\nRandomized Quick Sort:")
+print("Sorted Array:", arr2)
+print("Number of Comparisons:", count2[0])
+print("Execution Time:", time2, "seconds")
+
+A. Deterministic Quick Sort
+Select the last element as the pivot.
+Compare all other elements with the pivot.
+Place smaller elements on the left and larger elements on the right.
+Place the pivot in its correct position.
+Recursively sort the left and right subarrays.
+
+B. Randomized Quick Sort
+Select a random element as the pivot.
+Move the selected pivot to the last position.
+Partition the array.
+Place the pivot in its correct position.
+Recursively sort the left and right subarrays.
+Repeat until the entire array is sorted.
+
+Q1. Explain difference between quick sort and randomized quick sort? What is deterministic quick sort?
+Deterministic Quick Sort: Deterministic Quick Sort always selects the pivot using a fixed rule, such as the first or last element of the array.
+Randomized Quick Sort: Randomized Quick Sort selects the pivot randomly from the available elements of the array.
+Deterministic Quick Sort Randomized Quick Sort
+-Selects pivot using a fixed rule. Selects pivot randomly.
+-Pivot selection is predictable. Pivot selection is unpredictable.
+-May perform poorly on sorted arrays. Reduces the likelihood of consistently poor partitions.
+
+Q2. Comment on why randomized quick sort is more preferable to normal quick sort? Write pseudo code for randomized quick sort.
+Why is Randomized Quick Sort preferable?
+-It selects the pivot randomly.
+-It reduces the chances of repeatedly producing unbalanced partitions.
+-It provides expected O(n log n) time complexity.
+-It performs well on different input arrangements.
+-It reduces dependence on the original ordering of elements.
+
+Q3. Discuss in details complexity analysis of randomized quick sort. What is overall Time Complexity in Worst Case? Comment on stability of the same.
+Best Case: O(n log n)- Pivot divides array into equal parts.
+Average Case: O(n log n) expected- Partitions are reasonably balanced on average.
+Worst Case: O(n²)-Pivot repeatedly becomes the smallest or largest element.
+Space Complexity:
+Best/Average Case: O(log n) recursion stack.
+Worst Case: O(n) recursion stack.
+
+Part C: 10 Important Viva Questions and Answers
+Q1. What is Quick Sort?
+Quick Sort is a sorting algorithm based on the divide-and-conquer technique. It selects a pivot and partitions the array into smaller subarrays.
+
+Q2. What is a pivot?
+A pivot is an element selected from the array that is used to divide the array into smaller and larger elements during partitioning.
+
+Q3. What is deterministic Quick Sort?
+It is a Quick Sort algorithm that selects its pivot using a fixed method, such as choosing the first or last element.
+
+Q4. What is Randomized Quick Sort?
+It is a variation of Quick Sort that selects the pivot randomly to reduce the chances of consistently unbalanced partitions.
+
+Q5. What is the average time complexity of Quick Sort?
+O(n log n).
+
+Q6. What is the worst-case time complexity of Quick Sort?
+O(n²), when the pivot repeatedly creates highly unbalanced partitions.
+
+Q7. What is the difference between Las Vegas and Monte Carlo algorithms?
+Las Vegas: Always produces the correct result, but execution time may vary.
+Monte Carlo: Has bounded execution time but may produce an incorrect result with some probability.
+
+Q8. Why is Randomized Quick Sort better than deterministic Quick Sort?
+It reduces the dependence on the original input arrangement by selecting pivots randomly, resulting in O(n log n) expected time complexity.
+
+Q9. What is the space complexity of Quick Sort?
+Average case: O(log n).
+Worst case: O(n).
