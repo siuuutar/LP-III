@@ -1,0 +1,212 @@
+# EMAIL SPAM DETECTION USING KNN AND SVM
+
+# Step 1: Import libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+
+from sklearn.metrics import (
+    accuracy_score, precision_score, recall_score,
+    f1_score, confusion_matrix, classification_report
+)
+
+# Step 2: Load dataset
+df = pd.read_csv("emails.csv")
+
+print("Dataset Shape:", df.shape)
+print("\nFirst 5 Rows:")
+display(df.head())
+
+# Step 3: Check missing values
+print("\nMissing Values:", df.isnull().sum().sum())
+
+# Step 4: Separate features and target
+# Remove Email No. because it is only an identifier
+X = df.drop(columns=["Email No.", "Prediction"])
+y = df["Prediction"]
+
+print("\nFeature Shape:", X.shape)
+print("Target Shape:", y.shape)
+
+# Step 5: Display class distribution
+print("\nEmail Class Distribution:")
+print(y.value_counts())
+
+sns.countplot(x=y)
+plt.title("Spam vs Not Spam Email Count")
+plt.xlabel("Email Class (0 = Not Spam, 1 = Spam)")
+plt.ylabel("Number of Emails")
+plt.show()
+
+# Step 6: Split dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
+
+print("\nTraining Samples:", X_train.shape[0])
+print("Testing Samples:", X_test.shape[0])
+
+# Step 7: Create KNN and SVM models
+# StandardScaler scales features before classification
+models = {
+    "K-Nearest Neighbors": make_pipeline(
+        StandardScaler(),
+        KNeighborsClassifier(n_neighbors=5)
+    ),
+
+    "Support Vector Machine": make_pipeline(
+        StandardScaler(),
+        SVC(kernel="linear")
+    )
+}
+
+# Step 8: Train and evaluate models
+results = []
+
+for name, model in models.items():
+
+    print("\n===================================")
+    print(name)
+    print("===================================")
+
+    # Train model
+    model.fit(X_train, y_train)
+
+    # Predict test data
+    y_pred = model.predict(X_test)
+
+    # Calculate performance metrics
+    accuracy = accuracy_score(y_test, y_pred)
+    precision = precision_score(y_test, y_pred)
+    recall = recall_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred)
+
+    results.append({
+        "Algorithm": name,
+        "Accuracy": accuracy,
+        "Precision": precision,
+        "Recall": recall,
+        "F1 Score": f1
+    })
+
+    print("Accuracy :", round(accuracy * 100, 2), "%")
+    print("Precision:", round(precision, 4))
+    print("Recall   :", round(recall, 4))
+    print("F1 Score :", round(f1, 4))
+
+    print("\nClassification Report:")
+    print(classification_report(y_test, y_pred))
+
+    # Confusion Matrix
+    cm = confusion_matrix(y_test, y_pred)
+
+    print("Confusion Matrix:")
+    print(cm)
+
+    sns.heatmap(
+        cm,
+        annot=True,
+        fmt="d",
+        cmap="Blues",
+        xticklabels=["Not Spam", "Spam"],
+        yticklabels=["Not Spam", "Spam"]
+    )
+
+    plt.title(name + " - Confusion Matrix")
+    plt.xlabel("Predicted")
+    plt.ylabel("Actual")
+    plt.show()
+
+# Step 9: Compare model performance
+comparison = pd.DataFrame(results)
+
+print("\nMODEL PERFORMANCE COMPARISON:")
+display(comparison.round(4))
+
+# Step 10: Plot accuracy comparison
+plt.figure(figsize=(7, 4))
+sns.barplot(
+    data=comparison,
+    x="Algorithm",
+    y="Accuracy"
+)
+
+plt.title("KNN vs SVM Accuracy Comparison")
+plt.ylabel("Accuracy")
+plt.ylim(0, 1)
+plt.show()
+
+Q1. What is email spam detection?
+Email spam detection is the process of identifying unwanted or suspicious emails and classifying them as spam or not spam.
+
+Q2. What is binary classification?
+Binary classification is a machine learning task in which data is classified into two classes, such as spam and not spam.
+
+Q3. What is KNN?
+K-Nearest Neighbors is a supervised learning algorithm that classifies a data point based on the majority class of its nearest neighbors.
+
+Q4. What is the role of K in KNN?
+K represents the number of nearest neighbors considered while making a prediction.
+
+Q5. What happens if K is too small?
+The model may become sensitive to noise and overfit the training data.
+
+Q6. What is SVM?
+Support Vector Machine is a supervised learning algorithm that finds the best hyperplane to separate different classes.
+
+Q7. What is a hyperplane?
+A hyperplane is a decision boundary that separates data points belonging to different classes.
+
+Q8. What are support vectors?
+Support vectors are the data points closest to the decision boundary. They help determine the position of the hyperplane.
+
+Q9. What is the difference between KNN and SVM?
+KNN classifies data using nearby data points.
+SVM classifies data by finding an optimal separating hyperplane.
+
+Q10. Why is feature scaling required?
+Feature scaling brings features to a similar scale. It is important for distance-based algorithms such as KNN and can also improve SVM performance.
+
+Q11. What is accuracy?
+Accuracy is the ratio of correctly predicted observations to the total number of observations.
+\[ Accuracy=\frac{TP+TN}{TP+TN+FP+FN} \]
+
+Q12. What is precision?
+Precision measures how many emails predicted as spam are actually spam.
+\[ Precision=\frac{TP}{TP+FP} \]
+
+Q13. What is recall?
+Recall measures how many actual spam emails are correctly identified.
+\[ Recall=\frac{TP}{TP+FN} \]
+
+Q14. What is a confusion matrix?
+A confusion matrix is a table used to evaluate classification performance using True Positive, True Negative, False Positive and False Negative values.
+
+Q15. Which algorithm performed better in this experiment?
+SVM performed better, achieving 95.07% accuracy compared to KNN's 83.38%.
+
+Q16. What is the F1 score?
+F1 score is the harmonic mean of precision and recall.
+\[ F1=2\times\frac{Precision\times Recall}{Precision+Recall} \]
+
+Q17. What is the difference between supervised and unsupervised learning?
+Supervised learning uses labelled data, whereas unsupervised learning works with unlabelled data.
+
+Q18. What is the purpose of train-test splitting?
+It divides the dataset into training and testing sets to evaluate how well the model performs on unseen data.
+
+Q19. What does random_state=42 do?
+It ensures reproducibility by generating the same train-test split whenever the code is executed with the same data.
+
+Q20. Which Python libraries are used in this experiment?
+Pandas, NumPy, Matplotlib, Seaborn and Scikit-learn.
